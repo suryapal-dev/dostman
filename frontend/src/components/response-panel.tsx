@@ -52,22 +52,24 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
         <div className="text-sm text-muted-foreground">Size: {response.size}</div>
       </div>
 
-      <Tabs defaultValue="body" className="flex-1">
+      <Tabs defaultValue="body" className="flex-1 flex flex-col">
         <TabsList className="mx-4 mt-2">
           <TabsTrigger value="body">Body</TabsTrigger>
           <TabsTrigger value="headers">Headers</TabsTrigger>
         </TabsList>
-        <TabsContent value="body" className="p-0 flex-1">
-          {isJsonResponse ? (
-            <JsonViewer json={response.body} />
-          ) : (
-            <ScrollArea className="h-[calc(100vh-20rem)]">
+        <TabsContent value="body" className="flex-1 p-0">
+          <ScrollArea className="h-full">
+            {isJsonResponse ? (
+              <div className="h-full">
+                <JsonViewer json={response.body} />
+              </div>
+            ) : (
               <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{response.body}</pre>
-            </ScrollArea>
-          )}
+            )}
+          </ScrollArea>
         </TabsContent>
-        <TabsContent value="headers" className="p-4">
-          <ScrollArea className="h-[calc(100vh-20rem)]">
+        <TabsContent value="headers" className="flex-1 p-4">
+          <ScrollArea className="h-full">
             <div className="space-y-2">
               {Object.entries(response.headers).map(([key, value]) => (
                 <div key={key} className="grid grid-cols-[200px_1fr] gap-2 text-sm">

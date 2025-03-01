@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { HttpMethod, RequestData } from "@/components/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,11 @@ interface RequestPanelProps {
 
 export function RequestPanel({ request, onUpdateRequest, onSendRequest, onSaveRequest, isLoading }: RequestPanelProps) {
   const [requestName, setRequestName] = useState(request.name)
+
+  useEffect(() => {
+    setRequestName(request.name)
+  }, [request.name])
+
   const [isCurlImportOpen, setIsCurlImportOpen] = useState(false)
   const [isCurlExportOpen, setIsCurlExportOpen] = useState(false)
 

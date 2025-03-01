@@ -33,7 +33,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
       setError("Invalid JSON")
       setParsedJson(null)
     }
-  }, [json]) // Only re-run the effect if json changes
+  }, [json])
 
   if (error) {
     return <div className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{json}</div>
@@ -54,7 +54,13 @@ export function JsonViewer({ json }: JsonViewerProps) {
       <ScrollArea className="flex-1">
         <div className="p-2 font-mono text-sm">
           {parsedJson !== null && (
-            <TreeNode label="root" value={parsedJson} level={0} isLast={true} defaultExpanded={expandAll} />
+            <TreeNode
+              label="root"
+              value={parsedJson}
+              level={0}
+              isLast={true}
+              defaultExpanded={expandAll}
+            />
           )}
         </div>
       </ScrollArea>

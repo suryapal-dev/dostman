@@ -59,6 +59,23 @@ export interface HistoryItem {
   timestamp: number;
 }
 
+const convertToWailsCollections = (collections: Collection[]): types.Collection[] => {
+  return collections.map(col => new types.Collection({
+    id: col.id,
+    name: col.name,
+    requests: col.requests.map(req => new types.RequestData({
+      id: req.id,
+      name: req.name,
+      url: req.url,
+      method: req.method,
+      headers: req.headers,
+      params: req.params,
+      body: req.body,
+      bodyType: req.bodyType
+    }))
+  }));
+}
+
 export default function ApiClient() {
   const [activeTab, setActiveTab] = useState("request")
   const [collections, setCollections] = useState<Collection[]>([])
@@ -77,80 +94,43 @@ export default function ApiClient() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
 
-  // Load initial data
   useEffect(() => {
-    loadInitialData()
-  }, [])
+    // Load initial data
+    const loadInitialData = async () => {
+      try {
+        const [loadedCollections, loadedHistory] = await Promise.all([
+          LoadCollections(),
+          LoadHistory()
+        ]);
 
-  const loadInitialData = async () => {
-    try {
-      const [loadedCollections, loadedHistory] = await Promise.all([
-        LoadCollections(),
-        LoadHistory()
-      ])
-      
-      // Convert the Wails types to our frontend types
-      const convertedCollections: Collection[] = (loadedCollections || []).map(col => ({
-        id: col.id,
-        name: col.name,
-        requests: col.requests.map(req => ({
-          id: req.id,
-          name: req.name,
-          url: req.url,
-          method: req.method as HttpMethod,
-          headers: req.headers.map(h => ({
-            key: h.key,
-            value: h.value,
-            enabled: h.enabled
-          })),
-          params: req.params.map(p => ({
-            key: p.key,
-            value: p.value,
-            enabled: p.enabled
-          })),
-          body: req.body,
-          bodyType: req.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
-        }))
-      }))
+        // Convert the Wails types to frontend types
+        const convertedCollections: Collection[] = loadedCollections.map(col => ({
+          ...col,
+          requests: col.requests.map(req => ({
+            ...req,
+            method: req.method as HttpMethod,
+            bodyType: req.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+          }))
+        }));
 
-      const convertedHistory: HistoryItem[] = (loadedHistory || []).map(item => ({
-        id: item.id,
-        request: {
-          id: item.request.id,
-          name: item.request.name,
-          url: item.request.url,
-          method: item.request.method as HttpMethod,
-          headers: item.request.headers.map(h => ({
-            key: h.key,
-            value: h.value,
-            enabled: h.enabled
-          })),
-          params: item.request.params.map(p => ({
-            key: p.key,
-            value: p.value,
-            enabled: p.enabled
-          })),
-          body: item.request.body,
-          bodyType: item.request.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
-        },
-        response: {
-          status: item.response.status,
-          statusText: item.response.statusText,
-          time: item.response.time,
-          size: item.response.size,
-          headers: item.response.headers,
-          body: item.response.body,
-          contentType: item.response.contentType
-        },
-        timestamp: item.timestamp
-      }))
+        const convertedHistory: HistoryItem[] = loadedHistory.map(item => ({
+          ...item,
+          request: {
+            ...item.request,
+            method: item.request.method as HttpMethod,
+            bodyType: item.request.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+          }
+        }));
 
-      setCollections(convertedCollections)
-      setHistory(convertedHistory)
-    } catch (error) {
-      console.error("Failed to load initial data:", error)
-    }
-  }
+        setCollections(convertedCollections);
+        setHistory(convertedHistory);
+      } catch (error) {
+        console.error('Failed to load initial data:', error);
+      }
+    };
+    
+    loadInitialData();
+  }, []);
 
   const handleSendRequest = async () => {
     setIsLoading(true)
@@ -249,21 +229,39 @@ export default function ApiClient() {
   }
 
   // Collection management
-  const handleAddCollection = (name: string) => {
+  const handleAddCollection = async (name: string) => {
     const newCollection: Collection = {
       id: "col-" + Date.now().toString(),
       name,
       requests: [],
     }
-    setCollections([...collections, newCollection])
+    const updatedCollections = [...collections, newCollection];
+    setCollections(updatedCollections);
+    
+    // Convert to Wails types before saving
+    const wailsCollections = convertToWailsCollections(updatedCollections);
+    
+    await SaveCollections(wailsCollections);
   }
 
-  const handleRenameCollection = (id: string, name: string) => {
-    setCollections(collections.map((col) => (col.id === id ? { ...col, name } : col)))
+  const handleRenameCollection = async (id: string, name: string) => {
+    const updatedCollections = collections.map((col) => 
+      col.id === id ? { ...col, name } : col
+    );
+    setCollections(updatedCollections);
+    
+    const wailsCollections = convertToWailsCollections(updatedCollections);
+    
+    await SaveCollections(wailsCollections);
   }
 
-  const handleDeleteCollection = (id: string) => {
-    setCollections(collections.filter((col) => col.id !== id))
+  const handleDeleteCollection = async (id: string) => {
+    const updatedCollections = collections.filter((col) => col.id !== id);
+    setCollections(updatedCollections);
+    
+    const wailsCollections = convertToWailsCollections(updatedCollections);
+    
+    await SaveCollections(wailsCollections);
   }
 
   const handleSaveRequest = () => {
@@ -273,7 +271,7 @@ export default function ApiClient() {
     setIsSaveDialogOpen(true)
   }
 
-  const handleSaveRequestToCollection = (name: string, collectionId: string) => {
+  const handleSaveRequestToCollection = async (name: string, collectionId: string) => {
     const requestToSave: RequestData = {
       ...activeRequest,
       id: activeRequest.id.startsWith("temp-") ? "req-" + Date.now().toString() : activeRequest.id,
@@ -282,25 +280,25 @@ export default function ApiClient() {
 
     setActiveRequest(requestToSave)
 
-    setCollections(
-      collections.map((col) => {
-        if (col.id === collectionId) {
-          // Check if request already exists in this collection
-          const existingIndex = col.requests.findIndex((req) => req.id === requestToSave.id)
-
-          if (existingIndex >= 0) {
-            // Update existing request
-            const updatedRequests = [...col.requests]
-            updatedRequests[existingIndex] = requestToSave
-            return { ...col, requests: updatedRequests }
-          } else {
-            // Add new request
-            return { ...col, requests: [...col.requests, requestToSave] }
-          }
+    const updatedCollections = collections.map((col) => {
+      if (col.id === collectionId) {
+        const existingIndex = col.requests.findIndex((req) => req.id === requestToSave.id)
+        if (existingIndex >= 0) {
+          const updatedRequests = [...col.requests]
+          updatedRequests[existingIndex] = requestToSave
+          return { ...col, requests: updatedRequests }
+        } else {
+          return { ...col, requests: [...col.requests, requestToSave] }
         }
-        return col
-      }),
-    )
+      }
+      return col
+    });
+
+    setCollections(updatedCollections);
+    
+    const wailsCollections = convertToWailsCollections(updatedCollections);
+    
+    await SaveCollections(wailsCollections);
   }
 
   const handleRenameRequest = (collectionId: string, requestId: string, name: string) => {
