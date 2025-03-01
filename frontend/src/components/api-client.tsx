@@ -177,7 +177,7 @@ export default function ApiClient() {
         timestamp: Date.now(),
       }
 
-      setHistory((prev) => [historyItem, ...prev.slice(0, 19)]) // Keep only last 20 items
+      setHistory((prev: HistoryItem[]) => [historyItem, ...prev.slice(0, 19)]) // Keep only last 20 items
     } catch (error) {
       console.error("Request failed:", error)
       setResponse({
