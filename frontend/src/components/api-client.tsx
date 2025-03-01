@@ -12,48 +12,57 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { SaveRequestDialog } from "@/components/save-request-dialog"
-import { useLocalStorage } from "@/lib/use-local-storage"
+// Import Wails backend functions
+import { SendRequest, LoadCollections, SaveCollections, LoadHistory, SaveHistory } from '../../wailsjs/go/main/App'
+import { types } from '../../wailsjs/go/models'
 
+// Use the Wails-generated types as a base
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD"
-export type RequestData = {
-  id: string
-  name: string
-  url: string
-  method: HttpMethod
-  headers: { key: string; value: string; enabled: boolean }[]
-  params: { key: string; value: string; enabled: boolean }[]
-  body: string
-  bodyType: "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+
+export interface KeyValuePair {
+  key: string;
+  value: string;
+  enabled: boolean;
 }
 
-export type ResponseData = {
-  status: number
-  statusText: string
-  time: number
-  size: string
-  headers: Record<string, string>
-  body: string
-  contentType: string
+export interface RequestData {
+  id: string;
+  name: string;
+  url: string;
+  method: HttpMethod;
+  headers: KeyValuePair[];
+  params: KeyValuePair[];
+  body: string;
+  bodyType: "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none";
 }
 
-export type Collection = {
-  id: string
-  name: string
-  requests: RequestData[]
+export interface ResponseData {
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+  time: number;
+  size: string;
+  contentType: string;
 }
 
-export type HistoryItem = {
-  id: string
-  request: RequestData
-  response: ResponseData
-  timestamp: number
+export interface Collection {
+  id: string;
+  name: string;
+  requests: RequestData[];
+}
+
+export interface HistoryItem {
+  id: string;
+  request: RequestData;
+  response: ResponseData;
+  timestamp: number;
 }
 
 export default function ApiClient() {
   const [activeTab, setActiveTab] = useState("request")
-  const [collections, setCollections] = useLocalStorage<Collection[]>("api-forge-collections", [], true)
-  const [history, setHistory] = useLocalStorage<HistoryItem[]>("api-forge-history", [])
-
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [history, setHistory] = useState<HistoryItem[]>([])
   const [activeRequest, setActiveRequest] = useState<RequestData>({
     id: "temp-" + Date.now().toString(),
     name: "New Request",
@@ -64,122 +73,146 @@ export default function ApiClient() {
     body: "",
     bodyType: "none",
   })
-
   const [response, setResponse] = useState<ResponseData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
 
-  // Initialize with a default collection if none exists
+  // Load initial data
   useEffect(() => {
-    if (collections.length === 0) {
-      setCollections([
-        {
-          id: "default-" + Date.now().toString(),
-          name: "My Collection",
-          requests: [],
-        },
+    loadInitialData()
+  }, [])
+
+  const loadInitialData = async () => {
+    try {
+      const [loadedCollections, loadedHistory] = await Promise.all([
+        LoadCollections(),
+        LoadHistory()
       ])
+      
+      // Convert the Wails types to our frontend types
+      const convertedCollections: Collection[] = (loadedCollections || []).map(col => ({
+        id: col.id,
+        name: col.name,
+        requests: col.requests.map(req => ({
+          id: req.id,
+          name: req.name,
+          url: req.url,
+          method: req.method as HttpMethod,
+          headers: req.headers.map(h => ({
+            key: h.key,
+            value: h.value,
+            enabled: h.enabled
+          })),
+          params: req.params.map(p => ({
+            key: p.key,
+            value: p.value,
+            enabled: p.enabled
+          })),
+          body: req.body,
+          bodyType: req.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+        }))
+      }))
+
+      const convertedHistory: HistoryItem[] = (loadedHistory || []).map(item => ({
+        id: item.id,
+        request: {
+          id: item.request.id,
+          name: item.request.name,
+          url: item.request.url,
+          method: item.request.method as HttpMethod,
+          headers: item.request.headers.map(h => ({
+            key: h.key,
+            value: h.value,
+            enabled: h.enabled
+          })),
+          params: item.request.params.map(p => ({
+            key: p.key,
+            value: p.value,
+            enabled: p.enabled
+          })),
+          body: item.request.body,
+          bodyType: item.request.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+        },
+        response: {
+          status: item.response.status,
+          statusText: item.response.statusText,
+          time: item.response.time,
+          size: item.response.size,
+          headers: item.response.headers,
+          body: item.response.body,
+          contentType: item.response.contentType
+        },
+        timestamp: item.timestamp
+      }))
+
+      setCollections(convertedCollections)
+      setHistory(convertedHistory)
+    } catch (error) {
+      console.error("Failed to load initial data:", error)
     }
-  }, [collections.length, setCollections]) // Added collections.length and setCollections to dependencies
+  }
 
   const handleSendRequest = async () => {
     setIsLoading(true)
     try {
-      // Build URL with query parameters
-      const url = new URL(activeRequest.url)
-      activeRequest.params
-        .filter((param) => param.enabled && param.key)
-        .forEach((param) => {
-          url.searchParams.append(param.key, param.value)
-        })
+      // Convert our frontend request to a Wails request
+      const wailsRequest = {
+        ...activeRequest,
+        headers: activeRequest.headers.filter(h => h.enabled && h.key),
+        params: activeRequest.params.filter(p => p.enabled && p.key),
+        convertValues: function() {} // Add the required method
+      };
 
-      // Build headers
-      const headers: Record<string, string> = {}
-      activeRequest.headers
-        .filter((header) => header.enabled && header.key)
-        .forEach((header) => {
-          headers[header.key] = header.value
-        })
-
-      // Build request options
-      const options: RequestInit = {
-        method: activeRequest.method,
-        headers,
+      const responseData = await SendRequest(wailsRequest)
+      const convertedResponse: ResponseData = {
+        status: responseData.status,
+        statusText: responseData.statusText,
+        time: responseData.time,
+        size: responseData.size,
+        headers: responseData.headers,
+        body: responseData.body,
+        contentType: responseData.contentType
       }
 
-      // Add body for non-GET requests
-      if (activeRequest.method !== "GET" && activeRequest.method !== "HEAD" && activeRequest.bodyType !== "none") {
-        if (activeRequest.bodyType === "json") {
-          options.headers = {
-            ...options.headers,
-            "Content-Type": "application/json",
-          }
-          try {
-            options.body = JSON.stringify(JSON.parse(activeRequest.body))
-          } catch (e) {
-            options.body = activeRequest.body
-          }
-        } else if (activeRequest.bodyType === "form-data") {
-          // Handle form data
-          const formData = new FormData()
-          try {
-            const formValues = JSON.parse(activeRequest.body)
-            Object.entries(formValues).forEach(([key, value]) => {
-              formData.append(key, value as string)
-            })
-            options.body = formData
-          } catch (e) {
-            options.body = activeRequest.body
-          }
-        }
-      }
-
-      const startTime = Date.now()
-      const res = await fetch(url.toString(), options)
-      const endTime = Date.now()
-
-      const responseHeaders: Record<string, string> = {}
-      res.headers.forEach((value, key) => {
-        responseHeaders[key] = value
-      })
-
-      const contentType = res.headers.get("content-type") || ""
-      let responseBody = ""
-      let responseSize = "0 B"
-
-      if (contentType.includes("application/json")) {
-        const json = await res.json()
-        responseBody = JSON.stringify(json, null, 2)
-        responseSize = new Blob([responseBody]).size + " B"
-      } else {
-        responseBody = await res.text()
-        responseSize = new Blob([responseBody]).size + " B"
-      }
-
-      const responseData: ResponseData = {
-        status: res.status,
-        statusText: res.statusText,
-        time: endTime - startTime,
-        size: responseSize,
-        headers: responseHeaders,
-        body: responseBody,
-        contentType,
-      }
-
-      setResponse(responseData)
+      setResponse(convertedResponse)
       setActiveTab("response")
 
-      // Add to history
-      const historyItem: HistoryItem = {
+      // Create a new history item with proper Wails types
+      const historyItem = new types.HistoryItem({
         id: Date.now().toString(),
-        request: { ...activeRequest },
-        response: responseData,
-        timestamp: Date.now(),
-      }
+        request: new types.RequestData({
+          id: activeRequest.id,
+          name: activeRequest.name,
+          url: activeRequest.url,
+          method: activeRequest.method,
+          headers: activeRequest.headers,
+          params: activeRequest.params,
+          body: activeRequest.body,
+          bodyType: activeRequest.bodyType
+        }),
+        response: new types.ResponseData({
+          status: convertedResponse.status,
+          statusText: convertedResponse.statusText,
+          time: convertedResponse.time,
+          size: convertedResponse.size,
+          headers: convertedResponse.headers,
+          body: convertedResponse.body,
+          contentType: convertedResponse.contentType
+        }),
+        timestamp: Date.now()
+      });
 
-      setHistory((prev: HistoryItem[]) => [historyItem, ...prev.slice(0, 19)]) // Keep only last 20 items
+      await SaveHistory([historyItem]);
+      
+      const frontendHistoryItem: HistoryItem = {
+        id: historyItem.id,
+        request: activeRequest,
+        response: convertedResponse,
+        timestamp: historyItem.timestamp
+      };
+
+      setHistory(prev => [frontendHistoryItem, ...prev.slice(0, 19)])
     } catch (error) {
-      console.error("Request failed:", error)
       setResponse({
         status: 0,
         statusText: "Error",
@@ -187,7 +220,7 @@ export default function ApiClient() {
         size: "0 B",
         headers: {},
         body: error instanceof Error ? error.message : "Unknown error occurred",
-        contentType: "text/plain",
+        contentType: "text/plain"
       })
       setActiveTab("response")
     } finally {
