@@ -53,13 +53,28 @@ export function JsonViewer({ json }: JsonViewerProps) {
     setTimeout(() => setForceCollapse(false), 0)
   }
 
+  const handleNavigateToMatch = (index: number) => {
+    setCurrentMatchIndex(index)
+    // Give time for expansion to occur before scrolling
+    setTimeout(() => {
+      const matchElements = document.querySelectorAll('mark')
+      const currentMatch = matchElements[index]
+      if (currentMatch) {
+        currentMatch.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        })
+      }
+    }, 100)
+  }
+
   if (error) {
     return <div className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{json}</div>
   }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-2 border-b">
+      <div className="sticky top-0 z-10 flex items-center gap-2 p-2 border-b bg-background">
         <SearchBar
           searchTerm={searchTerm}
           matchCase={matchCase}
@@ -69,8 +84,8 @@ export function JsonViewer({ json }: JsonViewerProps) {
           onSearchChange={setSearchTerm}
           onMatchCaseToggle={() => setMatchCase(!matchCase)}
           onMatchWholeWordToggle={() => setMatchWholeWord(!matchWholeWord)}
-          onNextMatch={() => setCurrentMatchIndex((prev) => (prev + 1) % matches.length)}
-          onPreviousMatch={() => setCurrentMatchIndex((prev) => (prev - 1 + matches.length) % matches.length)}
+          onNextMatch={() => handleNavigateToMatch((currentMatchIndex + 1) % matches.length)}
+          onPreviousMatch={() => handleNavigateToMatch((currentMatchIndex - 1 + matches.length) % matches.length)}
         />
         <Button variant="outline" size="sm" onClick={() => setExpandAll(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" />
@@ -84,6 +99,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
       <ScrollArea 
         ref={scrollAreaRef} 
         className="flex-1 overflow-auto"
+        style={{ height: 'calc(100vh - 8rem)' }}
       >
         <div className="p-2 font-mono text-sm">
           {parsedJson !== null && (
@@ -103,7 +119,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
             />
           )}
         </div>
-        <div style={{ paddingBlockStart: "16rem" }}></div>
+        <div className="h-32" />
       </ScrollArea>
     </div>
   )

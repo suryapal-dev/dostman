@@ -353,7 +353,7 @@ export default function ApiClient() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="border-b px-4 py-2 flex items-center justify-between bg-background">
+      <header className="sticky top-0 z-20 border-b px-4 py-2 flex items-center justify-between bg-background">
         <h1 className="text-xl font-bold">Dostman</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={addNewRequest}>
@@ -367,7 +367,7 @@ export default function ApiClient() {
         <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
           <Sidebar>
             <Tabs defaultValue="collections">
-              <TabsList className="w-full">
+              <TabsList className="sticky top-0 z-10 w-full bg-background">
                 <TabsTrigger value="collections" className="flex-1">
                   Collections
                 </TabsTrigger>
@@ -408,7 +408,7 @@ export default function ApiClient() {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={80}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="mx-4 mt-2">
+            <TabsList className="sticky top-0 z-10 mx-4 mt-2 bg-background">
               <TabsTrigger value="request">Request</TabsTrigger>
               <TabsTrigger value="response">Response</TabsTrigger>
             </TabsList>

@@ -30,7 +30,7 @@ export function SearchBar({
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 bg-background">
       <input
         ref={searchInputRef}
         type="text"

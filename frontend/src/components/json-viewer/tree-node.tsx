@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { CopyButton } from "@/components/copy-button"
 import type { TreeNodeProps } from "./types"
@@ -18,10 +18,38 @@ export function TreeNode({
   scrollToMatch
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
+  const nodeRef = useRef<HTMLDivElement>(null)
   const isObject = value !== null && typeof value === "object"
   const isArray = Array.isArray(value)
   const hasChildren = isObject && Object.keys(value).length > 0
   const matchRefs = useRef<(HTMLSpanElement | null)[]>([])
+
+  // Check if this node or its children contain the current match
+  const containsCurrentMatch = useCallback(() => {
+    if (!searchTerm || !nodeRef.current) return false
+    
+    const nodeText = JSON.stringify(value)
+    const flags = matchCase ? "g" : "gi"
+    const wordBoundary = matchWholeWord ? "\\b" : ""
+    const regex = new RegExp(`${wordBoundary}${searchTerm}${wordBoundary}`, flags)
+    
+    let match
+    let matchIndex = 0
+    while ((match = regex.exec(nodeText)) !== null) {
+      if (matchIndex === currentMatchIndex) {
+        return true
+      }
+      matchIndex++
+    }
+    return false
+  }, [searchTerm, matchCase, matchWholeWord, currentMatchIndex, value])
+
+  // Auto-expand when containing current match
+  useEffect(() => {
+    if (containsCurrentMatch()) {
+      setExpanded(true)
+    }
+  }, [currentMatchIndex, containsCurrentMatch])
 
   useEffect(() => {
     setExpanded(defaultExpanded)
@@ -36,10 +64,18 @@ export function TreeNode({
   useEffect(() => {
     if (matches.length > 0 && matchRefs.current[currentMatchIndex]) {
       setExpanded(true)
-      matchRefs.current[currentMatchIndex]?.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center" 
-      })
+      const matchElement = matchRefs.current[currentMatchIndex];
+      if (matchElement) {
+        const scrollContainer = matchElement.closest('[data-radix-scroll-area-viewport]');
+        if (scrollContainer) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const elementRect = matchElement.getBoundingClientRect();
+          const relativeTop = elementRect.top - containerRect.top;
+          const centerOffset = (containerRect.height - elementRect.height) / 2;
+          
+          scrollContainer.scrollTop = scrollContainer.scrollTop + relativeTop - centerOffset;
+        }
+      }
     }
   }, [currentMatchIndex, matches])
 
@@ -100,7 +136,7 @@ export function TreeNode({
   }
 
   return (
-    <div className="my-1 text-start">
+    <div className="my-1 text-start" ref={nodeRef}>
       <div
         className="flex items-start hover:bg-muted/50 rounded px-1 cursor-pointer"
         onClick={hasChildren ? toggleExpanded : undefined}
