@@ -36,7 +36,7 @@ export function SearchBar({
         type="text"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Search..."
+        placeholder=" Search..."
         className="flex-1 p-1 border rounded"
       />
       {searchTerm && (
