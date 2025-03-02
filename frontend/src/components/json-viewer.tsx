@@ -111,7 +111,7 @@ function TreeNode({ label, value, level, isLast, defaultExpanded = false }: Tree
   }
 
   return (
-    <div className="my-1">
+    <div className="my-1 text-start">
       <div
         className="flex items-start hover:bg-muted/50 rounded px-1 cursor-pointer"
         onClick={hasChildren ? toggleExpanded : undefined}
@@ -157,7 +157,7 @@ function TreeNode({ label, value, level, isLast, defaultExpanded = false }: Tree
       {renderChildren()}
 
       {isObject && expanded && (
-        <div className="ml-4">
+        <div className="ml-1">
           <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
         </div>
       )}
