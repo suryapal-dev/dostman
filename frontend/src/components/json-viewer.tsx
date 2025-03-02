@@ -79,6 +79,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
           )
           )}
         </div>
+        <div style={{ paddingBlockStart: "13rem" }}></div>
       </ScrollArea>
     </div>
   )
