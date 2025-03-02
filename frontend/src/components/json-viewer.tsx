@@ -17,6 +17,7 @@ interface TreeNodeProps {
   level: number
   isLast: boolean
   defaultExpanded?: boolean
+  forceCollapse?: boolean
 }
 
 export function JsonViewer({ json }: JsonViewerProps) {
@@ -24,6 +25,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
   const [error, setError] = useState<string | null>(null)
   const [expandAll, setExpandAll] = useState(false)
   const [showRaw, setShowRaw] = useState(false)
+  const [forceCollapse, setForceCollapse] = useState(false)
 
   useEffect(() => {
     try {
@@ -45,6 +47,12 @@ export function JsonViewer({ json }: JsonViewerProps) {
     setExpandAll(false)
   }
 
+  const handleCollapseAll = () => {
+    setExpandAll(false)
+    setForceCollapse(true)
+    setTimeout(() => setForceCollapse(false), 0) // Reset forceCollapse after collapsing
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 p-2 border-b sticky top-0 bg-white z-10">
@@ -57,7 +65,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
               <Plus className="h-3.5 w-3.5 mr-1" />
               Expand All
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setExpandAll(false)}>
+            <Button variant="outline" size="sm" onClick={handleCollapseAll}>
               <Minus className="h-3.5 w-3.5 mr-1" />
               Collapse All
             </Button>
@@ -75,6 +83,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
               level={0}
               isLast={true}
               defaultExpanded={expandAll}
+              forceCollapse={forceCollapse}
             />
           )
           )}
@@ -85,7 +94,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
   )
 }
 
-function TreeNode({ label, value, level, isLast, defaultExpanded = false }: TreeNodeProps) {
+function TreeNode({ label, value, level, isLast, defaultExpanded = false, forceCollapse = false }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const isObject = value !== null && typeof value === "object"
   const isArray = Array.isArray(value)
@@ -94,6 +103,12 @@ function TreeNode({ label, value, level, isLast, defaultExpanded = false }: Tree
   useEffect(() => {
     setExpanded(defaultExpanded)
   }, [defaultExpanded])
+
+  useEffect(() => {
+    if (forceCollapse) {
+      setExpanded(false)
+    }
+  }, [forceCollapse])
 
   const toggleExpanded = () => {
     setExpanded(!expanded)
@@ -121,6 +136,7 @@ function TreeNode({ label, value, level, isLast, defaultExpanded = false }: Tree
             level={level + 1}
             isLast={index === entries.length - 1}
             defaultExpanded={defaultExpanded}
+            forceCollapse={forceCollapse}
           />
         ))}
       </div>
