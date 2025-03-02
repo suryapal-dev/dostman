@@ -85,6 +85,15 @@ func (s *StorageService) SaveHistory(history []types.HistoryItem) error {
 	return os.WriteFile(filepath.Join(s.basePath, "history.json"), data, 0644)
 }
 
+func (s *StorageService) DeleteAllHistory() error {
+	// Simply write an empty array to the history file
+	data, err := json.Marshal([]types.HistoryItem{})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(s.basePath, "history.json"), data, 0644)
+}
+
 func (s *StorageService) LoadHistory() ([]types.HistoryItem, error) {
 	data, err := os.ReadFile(filepath.Join(s.basePath, "history.json"))
 	if err != nil {

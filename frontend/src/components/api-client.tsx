@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { SaveRequestDialog } from "@/components/save-request-dialog"
 // Import Wails backend functions
-import { SendRequest, LoadCollections, SaveCollections, LoadHistory, SaveHistory } from '../../wailsjs/go/main/App'
+import { SendRequest, LoadCollections, SaveCollections, LoadHistory, SaveHistory, DeleteAllHistory } from '../../wailsjs/go/main/App'
 import { types } from '../../wailsjs/go/models'
 
 // Use the Wails-generated types as a base
@@ -339,6 +339,18 @@ export default function ApiClient() {
     }
   }
 
+  const handleClearHistory = async () => {
+    try {
+      // Clear the history in the UI
+      setHistory([])
+      
+      // Save the empty history to the backend
+      await DeleteAllHistory()
+    } catch (error) {
+      console.error('Failed to clear history:', error)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b px-4 py-2 flex items-center justify-between bg-background">
@@ -387,7 +399,7 @@ export default function ApiClient() {
                     setResponse(item.response)
                     setActiveTab("request")
                   }}
-                  onClearHistory={() => setHistory([])}
+                  onClearHistory={handleClearHistory}
                 />
               </TabsContent>
             </Tabs>

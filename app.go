@@ -58,3 +58,7 @@ func (a *App) SaveHistory(history []types.HistoryItem) error {
 func (a *App) LoadHistory() ([]types.HistoryItem, error) {
 	return a.storageService.LoadHistory()
 }
+
+func (a *App) DeleteAllHistory() error {
+	return a.storageService.DeleteAllHistory()
+}
