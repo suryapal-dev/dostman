@@ -47,7 +47,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-2 border-b">
+      <div className="flex items-center gap-2 p-2 border-b sticky top-0 bg-white z-10">
         <Button variant="outline" size="sm" onClick={handleShowFormatOrRaw}>
           {showRaw ? "Show Formatted" : "Show Raw"}
         </Button>
