@@ -45,8 +45,8 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b flex items-center gap-4">
-        <Badge className={getStatusColor(response.status)}>
-          {response.status} {response.statusText}
+        <Badge className={getStatusColor(response.status)} variant="outline">
+          {response?.statusText || response.status}
         </Badge>
         <div className="text-sm text-muted-foreground">Time: {response.time}ms</div>
         <div className="text-sm text-muted-foreground">Size: {response.size}</div>
@@ -58,7 +58,7 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
           <TabsTrigger value="headers">Headers</TabsTrigger>
         </TabsList>
         <TabsContent value="body" className="flex-1 p-0">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full overflow-auto">
             {isJsonResponse ? (
               <div className="h-full">
                 <JsonViewer json={response.body} />
@@ -69,7 +69,7 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
           </ScrollArea>
         </TabsContent>
         <TabsContent value="headers" className="flex-1 p-4">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full overflow-auto">
             <div className="space-y-2">
               {Object.entries(response.headers).map(([key, value]) => (
                 <div key={key} className="grid grid-cols-[200px_1fr] gap-2 text-sm">
