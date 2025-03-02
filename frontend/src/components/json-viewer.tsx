@@ -39,6 +39,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const matchRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -71,9 +72,17 @@ export function JsonViewer({ json }: JsonViewerProps) {
 
   useEffect(() => {
     if (matches.length > 0 && matchRefs.current[currentMatchIndex]) {
-      matchRefs.current[currentMatchIndex]?.scrollIntoView({ behavior: "smooth", block: "center" })
+      const scrollArea = scrollAreaRef.current;
+      const matchElement = matchRefs.current[currentMatchIndex];
+      if (scrollArea && matchElement) {
+        const scrollAreaRect = scrollArea.getBoundingClientRect();
+        const matchRect = matchElement.getBoundingClientRect();
+        if (matchRect.top < scrollAreaRect.top || matchRect.bottom > scrollAreaRect.bottom) {
+          matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
     }
-  }, [currentMatchIndex, matches])
+  }, [currentMatchIndex, matches]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -146,7 +155,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
           Collapse All
         </Button>
       </div>
-      <ScrollArea className="flex-1 overflow-auto">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 overflow-auto">
         <div className="p-2 font-mono text-sm">
           {parsedJson !== null && (
             <TreeNode
@@ -200,6 +209,13 @@ function TreeNode({
       setExpanded(false)
     }
   }, [forceCollapse])
+
+  useEffect(() => {
+    if (matches.length > 0 && matchRefs.current[currentMatchIndex]) {
+      setExpanded(true); // Automatically expand the node
+      matchRefs.current[currentMatchIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [currentMatchIndex, matches]);
 
   const toggleExpanded = () => {
     setExpanded(!expanded)
