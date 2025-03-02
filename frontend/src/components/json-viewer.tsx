@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { ChevronDown, ChevronRight, Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { CopyButton } from "./copy-button"
 
 interface JsonViewerProps {
   json: string
@@ -24,7 +25,6 @@ export function JsonViewer({ json }: JsonViewerProps) {
   const [parsedJson, setParsedJson] = useState<JsonValue | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [expandAll, setExpandAll] = useState(false)
-  const [showRaw, setShowRaw] = useState(false)
   const [forceCollapse, setForceCollapse] = useState(false)
 
   useEffect(() => {
@@ -42,41 +42,27 @@ export function JsonViewer({ json }: JsonViewerProps) {
     return <div className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{json}</div>
   }
 
-  const handleShowFormatOrRaw = () => {
-    setShowRaw(!showRaw)
-    setExpandAll(false)
-  }
-
   const handleCollapseAll = () => {
     setExpandAll(false)
     setForceCollapse(true)
-    setTimeout(() => setForceCollapse(false), 0) // Reset forceCollapse after collapsing
+    setTimeout(() => setForceCollapse(false), 0)
   }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-2 border-b sticky top-0 bg-white z-10">
-        <Button variant="outline" size="sm" onClick={handleShowFormatOrRaw}>
-          {showRaw ? "Show Formatted" : "Show Raw"}
+      <div className="flex items-center gap-2 p-2 border-b">
+        <Button variant="outline" size="sm" onClick={() => setExpandAll(true)}>
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Expand All
         </Button>
-        {!showRaw && (
-          <>
-            <Button variant="outline" size="sm" onClick={() => setExpandAll(true)}>
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Expand All
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleCollapseAll}>
-              <Minus className="h-3.5 w-3.5 mr-1" />
-              Collapse All
-            </Button>
-          </>
-        )}
+        <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+          <Minus className="h-3.5 w-3.5 mr-1" />
+          Collapse All
+        </Button>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-auto">
         <div className="p-2 font-mono text-sm">
-          {showRaw ? (
-            <pre className="whitespace-pre-wrap break-words text-start overflow-x-auto">{JSON.stringify(JSON.parse(json), null, 2)}</pre>
-          ) : (parsedJson !== null && (
+          {parsedJson !== null && (
             <TreeNode
               label="root"
               value={parsedJson}
@@ -85,7 +71,6 @@ export function JsonViewer({ json }: JsonViewerProps) {
               defaultExpanded={expandAll}
               forceCollapse={forceCollapse}
             />
-          )
           )}
         </div>
         <div style={{ paddingBlockStart: "13rem" }}></div>
@@ -146,53 +131,54 @@ function TreeNode({ label, value, level, isLast, defaultExpanded = false, forceC
   return (
     <div className="my-1 text-start">
       <div
-        className="flex items-start hover:bg-muted/50 rounded px-1 cursor-pointer"
-        onClick={hasChildren ? toggleExpanded : undefined}
+      className="flex items-start hover:bg-muted/50 rounded px-1 cursor-pointer"
+      onClick={hasChildren ? toggleExpanded : undefined}
       >
         <div className="mr-1 mt-0.5">
           {hasChildren ? (
-            expanded ? (
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            )
+          expanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           ) : (
-            <span className="inline-block w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          )
+          ) : (
+          <span className="inline-block w-3.5" />
           )}
         </div>
 
-        <div>
+        <div className="w-full">
           {label !== "root" && (
-            <>
-              <span className={isArray ? "text-blue-600" : "text-red-600"}>{label}</span>
-              <span className="text-muted-foreground mx-1">:</span>
-            </>
+          <>
+            <span className={isArray ? "text-blue-600" : "text-red-600"}>{label}</span>
+            <span className="text-muted-foreground mx-1">:</span>
+          </>
           )}
 
           {isObject ? (
+          <>
+            <span className="text-muted-foreground">{isArray ? "[" : "{"}</span>
+            {!expanded && (
             <>
-              <span className="text-muted-foreground">{isArray ? "[" : "{"}</span>
-              {!expanded && (
-                <>
-                  <span className="text-muted-foreground">
-                    {Object.keys(value).length} {Object.keys(value).length === 1 ? "item" : "items"}
-                  </span>
-                  <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
-                </>
-              )}
+              <span className="text-muted-foreground">
+              {Object.keys(value).length} {Object.keys(value).length === 1 ? "item" : "items"}
+              </span>
+              <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
             </>
+            )}
+          </>
           ) : (
-            renderValue()
+          renderValue()
           )}
+          <CopyButton value={value} label={label} />
         </div>
       </div>
 
       {renderChildren()}
 
       {isObject && expanded && (
-        <div className="ml-1">
-          <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
-        </div>
+      <div className="ml-1">
+        <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
+      </div>
       )}
     </div>
   )
