@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import type { HttpMethod, RequestData } from "@/components/api-client"
+import type { HttpMethod, RequestData, Collection } from "@/components/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,13 +16,23 @@ import { CurlExportModal } from "@/components/curl-export-modal"
 
 interface RequestPanelProps {
   request: RequestData
+  collections: Collection[]
   onUpdateRequest: (request: Partial<RequestData>) => void
   onSendRequest: () => void
   onSaveRequest: () => void
+  onMoveRequest: (requestId: string, fromCollectionId: string, toCollectionId: string) => void
   isLoading: boolean
 }
 
-export function RequestPanel({ request, onUpdateRequest, onSendRequest, onSaveRequest, isLoading }: RequestPanelProps) {
+export function RequestPanel({ 
+  request, 
+  collections,
+  onUpdateRequest, 
+  onSendRequest, 
+  onSaveRequest, 
+  onMoveRequest,
+  isLoading 
+}: RequestPanelProps) {
   const [requestName, setRequestName] = useState(request.name)
 
   useEffect(() => {
@@ -63,6 +73,25 @@ export function RequestPanel({ request, onUpdateRequest, onSendRequest, onSaveRe
               className="max-w-[200px]"
               placeholder="Request name"
             />
+            <Select 
+              value={request.collectionId} 
+              onValueChange={(collectionId) => {
+                if (collectionId !== request.collectionId) {
+                  onMoveRequest(request.id, request.collectionId, collectionId)
+                }
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select collection" />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map(collection => (
+                  <SelectItem key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button variant="outline" size="icon" onClick={handleSave} title="Save request">
               <Save className="h-4 w-4" />
             </Button>

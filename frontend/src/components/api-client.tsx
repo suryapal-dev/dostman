@@ -34,6 +34,7 @@ export interface RequestData {
   params: KeyValuePair[];
   body: string;
   bodyType: "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none";
+  collectionId: string;
 }
 
 export interface ResponseData {
@@ -89,6 +90,7 @@ export default function ApiClient() {
     params: [],
     body: "",
     bodyType: "none",
+    collectionId: ""
   })
   const [response, setResponse] = useState<ResponseData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -109,7 +111,8 @@ export default function ApiClient() {
           requests: col.requests.map(req => ({
             ...req,
             method: req.method as HttpMethod,
-            bodyType: req.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+            bodyType: req.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none",
+            collectionId: col.id
           }))
         }));
 
@@ -118,7 +121,8 @@ export default function ApiClient() {
           request: {
             ...item.request,
             method: item.request.method as HttpMethod,
-            bodyType: item.request.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none"
+            bodyType: item.request.bodyType as "json" | "form-data" | "x-www-form-urlencoded" | "raw" | "none",
+            collectionId: item.id
           }
         }));
 
@@ -218,6 +222,7 @@ export default function ApiClient() {
       params: [],
       body: "",
       bodyType: "none",
+      collectionId: ""
     }
     setActiveRequest(newRequest)
     setResponse(null)
@@ -301,23 +306,27 @@ export default function ApiClient() {
     await SaveCollections(wailsCollections);
   }
 
-  const handleRenameRequest = (collectionId: string, requestId: string, name: string) => {
-    setCollections(
-      collections.map((col) => {
-        if (col.id === collectionId) {
-          return {
-            ...col,
-            requests: col.requests.map((req) => (req.id === requestId ? { ...req, name } : req)),
-          }
+  const handleRenameRequest = async (collectionId: string, requestId: string, name: string) => {
+    const updatedCollections = collections.map((col) => {
+      if (col.id === collectionId) {
+        return {
+          ...col,
+          requests: col.requests.map((req) => (req.id === requestId ? { ...req, name } : req)),
         }
-        return col
-      }),
-    )
+      }
+      return col
+    });
+
+    setCollections(updatedCollections);
 
     // Update active request if it's the one being renamed
     if (activeRequest.id === requestId) {
-      setActiveRequest((prev) => ({ ...prev, name }))
+      setActiveRequest((prev) => ({ ...prev, name }));
     }
+
+    // Save to backend
+    const wailsCollections = convertToWailsCollections(updatedCollections);
+    await SaveCollections(wailsCollections);
   }
 
   const handleDeleteRequest = (collectionId: string, requestId: string) => {
@@ -348,6 +357,42 @@ export default function ApiClient() {
       await DeleteAllHistory()
     } catch (error) {
       console.error('Failed to clear history:', error)
+    }
+  }
+
+  const handleMoveRequest = async (requestId: string, fromCollectionId: string, toCollectionId: string) => {
+    const updatedCollections = collections.map(col => {
+      if (col.id === fromCollectionId) {
+        return {
+          ...col,
+          requests: col.requests.filter(req => req.id !== requestId)
+        }
+      }
+      if (col.id === toCollectionId) {
+        const request = collections
+          .find(c => c.id === fromCollectionId)
+          ?.requests.find(r => r.id === requestId)
+        if (request) {
+          return {
+            ...col,
+            requests: [...col.requests, request]
+          }
+        }
+      }
+      return col
+    })
+
+    setCollections(updatedCollections)
+    
+    const wailsCollections = convertToWailsCollections(updatedCollections)
+    await SaveCollections(wailsCollections)
+
+    // Update active request if it was moved
+    if (activeRequest.id === requestId) {
+      setActiveRequest(prev => ({
+        ...prev,
+        collectionId: toCollectionId
+      }))
     }
   }
 
@@ -391,6 +436,7 @@ export default function ApiClient() {
                       onDeleteCollection={handleDeleteCollection}
                       onRenameRequest={handleRenameRequest}
                       onDeleteRequest={handleDeleteRequest}
+                      onMoveRequest={handleMoveRequest}
                     />
                   </TabsContent>
                   <TabsContent value="history" className="p-0 h-full">
@@ -425,6 +471,8 @@ export default function ApiClient() {
                     onSendRequest={handleSendRequest}
                     onSaveRequest={handleSaveRequest}
                     isLoading={isLoading}
+                    collections={collections}
+                    onMoveRequest={handleMoveRequest}
                   />
                 </TabsContent>
                 <TabsContent value="response" className="p-0">

@@ -62,3 +62,36 @@ func (a *App) LoadHistory() ([]types.HistoryItem, error) {
 func (a *App) DeleteAllHistory() error {
 	return a.storageService.DeleteAllHistory()
 }
+
+func (a *App) MoveRequest(payload types.MoveRequestPayload) error {
+	collections, err := a.storageService.LoadCollections()
+	if err != nil {
+		return err
+	}
+
+	var request *types.RequestData
+	// Remove request from source collection
+	for i, col := range collections {
+		if col.ID == payload.FromCollectionId {
+			for j, req := range col.Requests {
+				if req.ID == payload.RequestId {
+					request = &req
+					collections[i].Requests = append(collections[i].Requests[:j], collections[i].Requests[j+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+	// Add request to target collection
+	if request != nil {
+		for i, col := range collections {
+			if col.ID == payload.ToCollectionId {
+				collections[i].Requests = append(collections[i].Requests, *request)
+				break
+			}
+		}
+	}
+
+	return a.storageService.SaveCollections(collections)
+}

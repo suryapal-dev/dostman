@@ -155,6 +155,22 @@ export namespace types {
 		}
 	}
 	
+	export class MoveRequestPayload {
+	    requestId: string;
+	    fromCollectionId: string;
+	    toCollectionId: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MoveRequestPayload(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.requestId = source["requestId"];
+	        this.fromCollectionId = source["fromCollectionId"];
+	        this.toCollectionId = source["toCollectionId"];
+	    }
+	}
 	
 
 }

@@ -6,6 +6,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils"
 import { CollectionDialog } from "@/components/collection-dialog"
 import { Button } from "@/components/ui/button"
+import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 
 interface CollectionsPanelProps {
   collections: Collection[]
@@ -16,6 +18,111 @@ interface CollectionsPanelProps {
   onDeleteCollection: (id: string) => void
   onRenameRequest: (collectionId: string, requestId: string, name: string) => void
   onDeleteRequest: (collectionId: string, requestId: string) => void
+  onMoveRequest: (requestId: string, sourceCollectionId: string, targetCollectionId: string) => void
+}
+
+interface DraggableRequestProps {
+  request: RequestData
+  collectionId: string
+  isActive: boolean
+  onSelect: () => void
+  onRename: () => void
+  onDelete: () => void
+  onMove: (targetCollectionId: string) => void
+}
+
+const DraggableRequest = ({ request, collectionId, isActive, onSelect, onRename, onDelete, onMove }: DraggableRequestProps) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'REQUEST',
+    item: { requestId: request.id, sourceCollectionId: collectionId },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }))
+
+  return (
+    <div
+      ref={drag}
+      className={cn(
+        "flex items-center justify-between text-sm p-1.5 rounded-md cursor-move group",
+        isActive ? "bg-muted" : "hover:bg-muted/50",
+        isDragging ? "opacity-50" : "opacity-100"
+      )}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "text-xs px-1.5 py-0.5 rounded font-medium",
+            request.method === "GET"
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+              : request.method === "POST"
+                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                : request.method === "PUT"
+                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                  : request.method === "DELETE"
+                    ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+          )}
+        >
+          {request.method}
+        </span>
+        <span className="truncate max-w-[120px]">{request.name}</span>
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={onRename}
+          >
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-500"
+            onClick={onDelete}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+interface DroppableCollectionProps {
+  collection: Collection
+  children: React.ReactNode
+  onDrop: (requestId: string, sourceCollectionId: string, targetCollectionId: string) => void
+}
+
+const DroppableCollection = ({ collection, children, onDrop }: DroppableCollectionProps) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: 'REQUEST',
+    drop: (item: { requestId: string, sourceCollectionId: string }) => {
+      if (item.sourceCollectionId !== collection.id) {
+        onDrop(item.requestId, item.sourceCollectionId, collection.id)
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  }))
+
+  return (
+    <div
+      ref={drop}
+      className={cn(
+        "rounded-md",
+        isOver && "bg-muted/50"
+      )}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function CollectionsPanel({
@@ -27,6 +134,7 @@ export function CollectionsPanel({
   onDeleteCollection,
   onRenameRequest,
   onDeleteRequest,
+  onMoveRequest,
 }: CollectionsPanelProps) {
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({})
   const [isAddCollectionOpen, setIsAddCollectionOpen] = useState(false)
@@ -45,7 +153,7 @@ export function CollectionsPanel({
   }
 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
       <ScrollArea className="h-[calc(100vh-8rem)]">
         <div className="p-2">
           <div className="flex items-center justify-between mb-2">
@@ -65,7 +173,13 @@ export function CollectionsPanel({
           ) : (
             <div className="space-y-1">
               {collections.map((collection) => (
-                <div key={collection.id} className="space-y-1">
+                <DroppableCollection
+                  key={collection.id}
+                  collection={collection}
+                  onDrop={(requestId, sourceCollectionId, targetCollectionId) => 
+                    onMoveRequest(requestId, sourceCollectionId, targetCollectionId)
+                  }
+                >
                   <div
                     className="flex items-center justify-between text-sm p-1.5 rounded-md hover:bg-muted cursor-pointer group"
                     onClick={() => toggleCollection(collection.id)}
@@ -101,60 +215,22 @@ export function CollectionsPanel({
                   {expandedCollections[collection.id] && collection.requests.length > 0 && (
                     <div className="ml-6 space-y-1">
                       {collection.requests.map((request) => (
-                        <div
+                        <DraggableRequest
                           key={request.id}
-                          className={cn(
-                            "flex items-center justify-between text-sm p-1.5 rounded-md cursor-pointer group",
-                            activeRequestId === request.id ? "bg-muted" : "hover:bg-muted/50",
-                          )}
-                          onClick={() => onSelectRequest(request)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "text-xs px-1.5 py-0.5 rounded font-medium",
-                                request.method === "GET"
-                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                  : request.method === "POST"
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                    : request.method === "PUT"
-                                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                                      : request.method === "DELETE"
-                                        ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                                        : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-                              )}
-                            >
-                              {request.method}
-                            </span>
-                            <span className="truncate max-w-[120px]">{request.name}</span>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  setEditingRequest({
-                                    collectionId: collection.id,
-                                    requestId: request.id,
-                                    name: request.name,
-                                  })
-                                }
-                              >
-                                Rename
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-500"
-                                onClick={() => onDeleteRequest(collection.id, request.id)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                          request={request}
+                          collectionId={collection.id}
+                          isActive={activeRequestId === request.id}
+                          onSelect={() => onSelectRequest(request)}
+                          onRename={() => setEditingRequest({
+                            collectionId: collection.id,
+                            requestId: request.id,
+                            name: request.name,
+                          })}
+                          onDelete={() => onDeleteRequest(collection.id, request.id)}
+                          onMove={(targetCollectionId) => 
+                            onMoveRequest(request.id, collection.id, targetCollectionId)
+                          }
+                        />
                       ))}
                     </div>
                   )}
@@ -162,7 +238,7 @@ export function CollectionsPanel({
                   {expandedCollections[collection.id] && collection.requests.length === 0 && (
                     <div className="ml-6 py-2 text-sm text-muted-foreground">No requests in this collection</div>
                   )}
-                </div>
+                </DroppableCollection>
               ))}
             </div>
           )}
@@ -195,7 +271,7 @@ export function CollectionsPanel({
           initialName={editingRequest.name}
         />
       )}
-    </>
+    </DndProvider>
   )
 }
 

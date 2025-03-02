@@ -51,3 +51,9 @@ type HistoryItem struct {
 	Response  ResponseData `json:"response"`
 	Timestamp int64        `json:"timestamp"`
 }
+
+type MoveRequestPayload struct {
+	RequestId        string `json:"requestId"`
+	FromCollectionId string `json:"fromCollectionId"`
+	ToCollectionId   string `json:"toCollectionId"`
+}

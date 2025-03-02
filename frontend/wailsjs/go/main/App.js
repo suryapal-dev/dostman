@@ -14,6 +14,10 @@ export function LoadHistory() {
   return window['go']['main']['App']['LoadHistory']();
 }
 
+export function MoveRequest(arg1) {
+  return window['go']['main']['App']['MoveRequest'](arg1);
+}
+
 export function SaveCollections(arg1) {
   return window['go']['main']['App']['SaveCollections'](arg1);
 }

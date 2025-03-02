@@ -8,6 +8,8 @@ export function LoadCollections():Promise<Array<types.Collection>>;
 
 export function LoadHistory():Promise<Array<types.HistoryItem>>;
 
+export function MoveRequest(arg1:types.MoveRequestPayload):Promise<void>;
+
 export function SaveCollections(arg1:Array<types.Collection>):Promise<void>;
 
 export function SaveHistory(arg1:Array<types.HistoryItem>):Promise<void>;
