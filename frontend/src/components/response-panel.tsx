@@ -70,10 +70,10 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
         </TabsContent>
         <TabsContent value="headers" className="flex-1 p-4">
           <ScrollArea className="h-full overflow-auto">
-            <div className="space-y-2">
+            <div className="space-y-2 text-start">
               {Object.entries(response.headers).map(([key, value]) => (
-                <div key={key} className="grid grid-cols-[200px_1fr] gap-2 text-sm">
-                  <div className="font-medium">{key}:</div>
+                <div key={key} className="grid grid-cols-[300px_1fr] gap-3 text-sm">
+                  <div className="font-medium">{key} :</div>
                   <div className="text-muted-foreground">{value}</div>
                 </div>
               ))}
