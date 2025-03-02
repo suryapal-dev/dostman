@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { JsonViewer } from "@/components/json-viewer"
+import { JsonViewer } from "@/components/json-viewer/index"
 
 interface ResponsePanelProps {
   response: ResponseData | null
@@ -58,15 +58,17 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
           <TabsTrigger value="headers">Headers</TabsTrigger>
         </TabsList>
         <TabsContent value="body" className="flex-1 p-0">
-          <ScrollArea className="h-full overflow-auto">
-            {isJsonResponse ? (
-              <div className="h-full">
-                <JsonViewer json={response.body} />
-              </div>
-            ) : (
-              <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{response.body}</pre>
-            )}
-          </ScrollArea>
+          {isJsonResponse ? (
+            <div className="h-full">
+              <JsonViewer json={response.body} />
+            </div>
+          ) : (
+            <ScrollArea className="h-full">
+              <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words">
+                {response.body}
+              </pre>
+            </ScrollArea>
+          )}
         </TabsContent>
         <TabsContent value="headers" className="flex-1 p-4">
           <ScrollArea className="h-full overflow-auto">
