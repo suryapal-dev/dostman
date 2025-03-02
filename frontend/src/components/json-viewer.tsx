@@ -67,7 +67,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
       <ScrollArea className="flex-1">
         <div className="p-2 font-mono text-sm">
           {showRaw ? (
-            <pre className="whitespace-pre-wrap break-words text-start">{json}</pre>
+            <pre className="whitespace-pre-wrap break-words text-start overflow-x-auto">{JSON.stringify(JSON.parse(json), null, 2)}</pre>
           ) : (parsedJson !== null && (
             <TreeNode
               label="root"

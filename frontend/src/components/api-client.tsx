@@ -342,7 +342,7 @@ export default function ApiClient() {
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b px-4 py-2 flex items-center justify-between bg-background">
-        <h1 className="text-xl font-bold">API Forge</h1>
+        <h1 className="text-xl font-bold">Dostman</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={addNewRequest}>
             <Plus className="h-4 w-4 mr-1" />
