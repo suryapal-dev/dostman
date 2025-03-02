@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState, createContext, useContext } from "react"
 import { CheckCircle, AlertTriangle, Info, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -8,12 +8,27 @@ interface NotificationProps {
   onClose: () => void
 }
 
-export function Notification({ message, type, onClose }: NotificationProps) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000)
-    return () => clearTimeout(timer)
-  }, [onClose])
+const NotificationContext = createContext<(message: string, type: "success" | "warning" | "info" | "error") => void>(() => {})
 
+export const useNotification = () => useContext(NotificationContext)
+
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const [notification, setNotification] = useState<NotificationProps | null>(null)
+
+  const showNotification = (message: string, type: "success" | "warning" | "info" | "error") => {
+    setNotification({ message, type, onClose: () => setNotification(null) })
+    setTimeout(() => setNotification(null), 2000)
+  }
+
+  return (
+    <NotificationContext.Provider value={showNotification}>
+      {children}
+      {notification && <Notification {...notification} />}
+    </NotificationContext.Provider>
+  )
+}
+
+function Notification({ message, type, onClose }: NotificationProps) {
   const getIcon = () => {
     switch (type) {
       case "success":
@@ -32,7 +47,7 @@ export function Notification({ message, type, onClose }: NotificationProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-4 right-4 flex items-center gap-2 p-4 rounded shadow-lg transition-transform transform",
+        "fixed bottom-4 left-4 flex items-center gap-2 p-4 rounded shadow-lg transition-transform transform",
         type === "success" && "bg-green-100 text-green-800",
         type === "warning" && "bg-yellow-100 text-yellow-800",
         type === "info" && "bg-blue-100 text-blue-800",

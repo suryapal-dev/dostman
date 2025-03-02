@@ -1,3 +1,4 @@
+import { useNotification } from "@/components/notification"
 import { Copy } from "lucide-react"
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
@@ -10,11 +11,14 @@ interface CopyData {
 }
 
 export function CopyButton(copyData: CopyData) {
+  const showNotification = useNotification()
+
   const handleCopy = (event: React.MouseEvent) => {
     event.stopPropagation()
     const jsonValue = JSON.stringify(copyData.value, null, 2)
     const jsonString = typeof copyData.value === "object" ? jsonValue : JSON.stringify({[copyData.label]: copyData.value}, null, 2)
     navigator.clipboard.writeText(jsonString)
+    showNotification("Copied to clipboard!", "success")
   }
 
   return (

@@ -1,10 +1,13 @@
 import ApiClient from "@/components/api-client"
+import { NotificationProvider } from "@/components/notification"
 
 function App() {
     return (
-        <main className="min-h-screen bg-background">
-            <ApiClient />
-        </main>
+        <NotificationProvider>
+            <main className="min-h-screen bg-background">
+                <ApiClient />
+            </main>
+        </NotificationProvider>
     )
 }
 
