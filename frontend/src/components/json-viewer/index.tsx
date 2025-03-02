@@ -74,7 +74,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 flex items-center gap-2 p-2 border-b bg-background">
+      <div className="sticky top-0 z-30 flex items-center gap-2 p-2 border-b bg-background">
         <SearchBar
           searchTerm={searchTerm}
           matchCase={matchCase}

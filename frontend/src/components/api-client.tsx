@@ -353,7 +353,7 @@ export default function ApiClient() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="sticky top-0 z-20 border-b px-4 py-2 flex items-center justify-between bg-background">
+      <header className="sticky top-0 z-10 border-b px-4 py-2 flex items-center justify-between bg-background">
         <h1 className="text-xl font-bold">Dostman</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={addNewRequest}>
@@ -363,68 +363,76 @@ export default function ApiClient() {
           <ThemeToggle />
         </div>
       </header>
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
+      <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
         <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
           <Sidebar>
-            <Tabs defaultValue="collections">
-              <TabsList className="sticky top-0 z-10 w-full bg-background">
-                <TabsTrigger value="collections" className="flex-1">
-                  Collections
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex-1">
-                  History
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="collections" className="p-0">
-                <CollectionsPanel
-                  collections={collections}
-                  activeRequestId={activeRequest.id}
-                  onSelectRequest={(request) => {
-                    setActiveRequest(request)
-                    setResponse(null)
-                    setActiveTab("request")
-                  }}
-                  onAddCollection={handleAddCollection}
-                  onRenameCollection={handleRenameCollection}
-                  onDeleteCollection={handleDeleteCollection}
-                  onRenameRequest={handleRenameRequest}
-                  onDeleteRequest={handleDeleteRequest}
-                />
-              </TabsContent>
-              <TabsContent value="history" className="p-0">
-                <RequestHistory
-                  history={history}
-                  onSelectHistoryItem={(item) => {
-                    setActiveRequest(item.request)
-                    setResponse(item.response)
-                    setActiveTab("request")
-                  }}
-                  onClearHistory={handleClearHistory}
-                />
-              </TabsContent>
-            </Tabs>
+            <div className="flex flex-col h-full overflow-hidden">
+              <Tabs defaultValue="collections" className="flex flex-col h-full">
+                <TabsList className="sticky top-0 z-40 w-full bg-background border-b">
+                  <TabsTrigger value="collections" className="flex-1">
+                    Collections
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="flex-1">
+                    History
+                  </TabsTrigger>
+                </TabsList>
+                <div className="flex-1 overflow-y-auto">
+                  <TabsContent value="collections" className="p-0 h-full">
+                    <CollectionsPanel
+                      collections={collections}
+                      activeRequestId={activeRequest.id}
+                      onSelectRequest={(request) => {
+                        setActiveRequest(request)
+                        setResponse(null)
+                        setActiveTab("request")
+                      }}
+                      onAddCollection={handleAddCollection}
+                      onRenameCollection={handleRenameCollection}
+                      onDeleteCollection={handleDeleteCollection}
+                      onRenameRequest={handleRenameRequest}
+                      onDeleteRequest={handleDeleteRequest}
+                    />
+                  </TabsContent>
+                  <TabsContent value="history" className="p-0 h-full">
+                    <RequestHistory
+                      history={history}
+                      onSelectHistoryItem={(item) => {
+                        setActiveRequest(item.request)
+                        setResponse(item.response)
+                        setActiveTab("request")
+                      }}
+                      onClearHistory={handleClearHistory}
+                    />
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </div>
           </Sidebar>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={80}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="sticky top-0 z-10 mx-4 mt-2 bg-background">
-              <TabsTrigger value="request">Request</TabsTrigger>
-              <TabsTrigger value="response">Response</TabsTrigger>
-            </TabsList>
-            <TabsContent value="request" className="p-0 flex-1">
-              <RequestPanel
-                request={activeRequest}
-                onUpdateRequest={updateActiveRequest}
-                onSendRequest={handleSendRequest}
-                onSaveRequest={handleSaveRequest}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            <TabsContent value="response" className="p-0 flex-1">
-              <ResponsePanel response={response} isLoading={isLoading} />
-            </TabsContent>
-          </Tabs>
+          <div className="flex flex-col h-full overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+              <TabsList className="sticky top-0 z-40 mx-4 mt-2 bg-background">
+                <TabsTrigger value="request">Request</TabsTrigger>
+                <TabsTrigger value="response">Response</TabsTrigger>
+              </TabsList>
+              <div className="flex-1 overflow-y-auto">
+                <TabsContent value="request" className="p-0">
+                  <RequestPanel
+                    request={activeRequest}
+                    onUpdateRequest={updateActiveRequest}
+                    onSendRequest={handleSendRequest}
+                    onSaveRequest={handleSaveRequest}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                <TabsContent value="response" className="p-0">
+                  <ResponsePanel response={response} isLoading={isLoading} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
 
