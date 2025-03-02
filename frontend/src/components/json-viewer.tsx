@@ -23,6 +23,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
   const [parsedJson, setParsedJson] = useState<JsonValue | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [expandAll, setExpandAll] = useState(false)
+  const [showRaw, setShowRaw] = useState(false)
 
   useEffect(() => {
     try {
@@ -39,21 +40,35 @@ export function JsonViewer({ json }: JsonViewerProps) {
     return <div className="p-4 text-sm font-mono whitespace-pre-wrap break-words">{json}</div>
   }
 
+  const handleShowFormatOrRaw = () => {
+    setShowRaw(!showRaw)
+    setExpandAll(false)
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 p-2 border-b">
-        <Button variant="outline" size="sm" onClick={() => setExpandAll(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" />
-          Expand All
+        <Button variant="outline" size="sm" onClick={handleShowFormatOrRaw}>
+          {showRaw ? "Show Formatted" : "Show Raw"}
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setExpandAll(false)}>
-          <Minus className="h-3.5 w-3.5 mr-1" />
-          Collapse All
-        </Button>
+        {!showRaw && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setExpandAll(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Expand All
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setExpandAll(false)}>
+              <Minus className="h-3.5 w-3.5 mr-1" />
+              Collapse All
+            </Button>
+          </>
+        )}
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 font-mono text-sm">
-          {parsedJson !== null && (
+          {showRaw ? (
+            <pre className="whitespace-pre-wrap break-words text-start">{json}</pre>
+          ) : (parsedJson !== null && (
             <TreeNode
               label="root"
               value={parsedJson}
@@ -61,6 +76,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
               isLast={true}
               defaultExpanded={expandAll}
             />
+          )
           )}
         </div>
       </ScrollArea>
