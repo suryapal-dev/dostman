@@ -21,7 +21,7 @@ export function CopyButton(copyData: CopyData) {
     <div
       onClick={handleCopy}
       className="ml-1 cursor-pointer text-muted-foreground hover:text-primary transition-colors"
-      style={{ display: "inline-flex", alignItems: "center" }}
+      style={{ display: "ruby", alignItems: "center" }}
     >
       <Copy className="h-3.5 w-3.5" />
     </div>
