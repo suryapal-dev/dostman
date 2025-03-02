@@ -81,7 +81,10 @@ export function JsonViewer({ json }: JsonViewerProps) {
           Collapse All
         </Button>
       </div>
-      <ScrollArea ref={scrollAreaRef} className="flex-1">
+      <ScrollArea 
+        ref={scrollAreaRef} 
+        className="flex-1 overflow-auto"
+      >
         <div className="p-2 font-mono text-sm">
           {parsedJson !== null && (
             <TreeNode
@@ -100,6 +103,7 @@ export function JsonViewer({ json }: JsonViewerProps) {
             />
           )}
         </div>
+        <div style={{ paddingBlockStart: "16rem" }}></div>
       </ScrollArea>
     </div>
   )
