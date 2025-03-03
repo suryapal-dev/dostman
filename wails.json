@@ -7,7 +7,21 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "",
+    "name": "Suryapal Rao",
     "email": "rao.suryapal.23@gmail.com"
+  },
+  "info": {
+    "productName": "Dostman",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2025",
+    "comments": "Built with Wails"
+  },
+  "nsisType": "single",
+  "obfuscated": true,
+  "garbleargs": "-tiny -literals -seed=random",
+  "windows": {
+    "windowsConsole": false,
+    "webviewIsTransparent": true,
+    "windowIsTranslucent": true
   }
 }

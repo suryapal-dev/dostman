@@ -38,6 +38,15 @@ func (a *App) startup(ctx context.Context) {
 	a.storageService = services.NewStorageService(storageDir)
 }
 
+// shutdown is called at application termination
+func (a *App) shutdown(ctx context.Context) {
+	// Perform any necessary cleanup
+	if a.storageService != nil {
+		// Save any pending changes
+		// Add any cleanup code here
+	}
+}
+
 // Frontend-facing methods
 func (a *App) SendRequest(request types.RequestData) (*types.ResponseData, error) {
 	return a.apiService.SendRequest(request)
