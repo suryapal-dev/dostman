@@ -1,5 +1,23 @@
 Unicode true
 
+!define WAILS_INSTALL_WEBVIEW_DETAILPRINT "Installing WebView2 Runtime..."
+!define WAILS_WIN10_REQUIRED "Dostman requires Windows 10 or later."
+!define WAILS_ARCHITECTURE_NOT_SUPPORTED "This version of Dostman is not supported on your system architecture."
+
+# Customize the installer UI messages
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Dostman Setup"
+!define MUI_WELCOMEPAGE_TEXT "This will install Dostman on your computer.$\r$\n$\r$\nDostman is a powerful API client for testing and managing your API requests.$\r$\n$\r$\nClick Next to continue."
+
+!define MUI_FINISHPAGE_TITLE "Dostman Installation Complete"
+!define MUI_FINISHPAGE_TEXT "Dostman has been installed on your computer.$\r$\n$\r$\nClick Finish to close Setup."
+
+# Add run after installation option
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch Dostman"
+
+# Add custom branding
+BrandingText "Dostman Installer"
+
 ####
 ## Please note: Template replacements don't work in this file. They are provided with default defines like
 ## mentioned underneath.

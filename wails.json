@@ -14,7 +14,8 @@
     "productName": "Dostman",
     "productVersion": "1.0.0",
     "copyright": "Copyright © 2025",
-    "comments": "Built with Wails"
+    "comments": "Built with Wails",
+    "companyName": "Suryapal Rao"
   },
   "nsisType": "single",
   "obfuscated": true,
@@ -22,6 +23,13 @@
   "windows": {
     "windowsConsole": false,
     "webviewIsTransparent": true,
-    "windowIsTranslucent": true
+    "windowIsTranslucent": true,
+    "security": {
+      "com.microsoft.Windows.Security": {
+        "capabilities": [
+          "runFullTrust"
+        ]
+      }
+    }
   }
 }
