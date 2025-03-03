@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { SaveRequestDialog } from "@/components/save-request-dialog"
 // Import Wails backend functions
-import { SendRequest, LoadCollections, SaveCollections, LoadHistory, SaveHistory, DeleteAllHistory } from '../../wailsjs/go/main/App'
+import { SendRequest, LoadCollections, SaveCollections, LoadHistory, SaveHistory, DeleteAllHistory, CheckForUpdates, DownloadAndInstallUpdate } from '../../wailsjs/go/main/App'
 import { types } from '../../wailsjs/go/models'
 
 // Use the Wails-generated types as a base
@@ -95,6 +95,24 @@ export default function ApiClient() {
   const [response, setResponse] = useState<ResponseData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+
+  const checkForUpdates = async () => {
+    try {
+      const updateInfo = await CheckForUpdates()
+      if (updateInfo) {
+        // Show update dialog to user
+        if (confirm(`New version ${updateInfo.version} available. Would you like to update?\n\nRelease notes:\n${updateInfo.notes}`)) {
+          await DownloadAndInstallUpdate(updateInfo.downloadUrl)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check for updates:', error)
+    }
+  }
+
+  useEffect(() => {
+    checkForUpdates()
+  }, [])
 
   useEffect(() => {
     // Load initial data

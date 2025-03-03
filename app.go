@@ -9,25 +9,21 @@ import (
 	"dostman/backend/types"
 )
 
-// App struct
 type App struct {
 	ctx            context.Context
 	apiService     *services.APIService
 	storageService *services.StorageService
+	updateService  *services.UpdateService
 }
 
-// NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.apiService = services.NewAPIService()
 
-	// Get user's home directory for storage
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		homeDir = "."
@@ -36,14 +32,14 @@ func (a *App) startup(ctx context.Context) {
 	os.MkdirAll(storageDir, 0755)
 
 	a.storageService = services.NewStorageService(storageDir)
+
+	updateURL := "https://localhost:13414322/updates"
+	version := "1.0.0"
+	a.updateService = services.NewUpdateService(version, updateURL, storageDir)
 }
 
-// shutdown is called at application termination
 func (a *App) shutdown(ctx context.Context) {
-	// Perform any necessary cleanup
 	if a.storageService != nil {
-		// Save any pending changes
-		// Add any cleanup code here
 	}
 }
 
@@ -79,7 +75,6 @@ func (a *App) MoveRequest(payload types.MoveRequestPayload) error {
 	}
 
 	var request *types.RequestData
-	// Remove request from source collection
 	for i, col := range collections {
 		if col.ID == payload.FromCollectionId {
 			for j, req := range col.Requests {
@@ -92,7 +87,6 @@ func (a *App) MoveRequest(payload types.MoveRequestPayload) error {
 		}
 	}
 
-	// Add request to target collection
 	if request != nil {
 		for i, col := range collections {
 			if col.ID == payload.ToCollectionId {
@@ -103,4 +97,16 @@ func (a *App) MoveRequest(payload types.MoveRequestPayload) error {
 	}
 
 	return a.storageService.SaveCollections(collections)
+}
+
+func (a *App) CheckForUpdates() (*services.VersionInfo, error) {
+	return a.updateService.CheckForUpdates()
+}
+
+func (a *App) DownloadAndInstallUpdate(downloadURL string) error {
+	updateFile, err := a.updateService.DownloadUpdate(downloadURL)
+	if err != nil {
+		return err
+	}
+	return a.updateService.InstallUpdate(updateFile)
 }
