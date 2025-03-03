@@ -32,7 +32,7 @@ func (a *App) startup(ctx context.Context) {
 	if err != nil {
 		homeDir = "."
 	}
-	storageDir := filepath.Join(homeDir, ".apiforge")
+	storageDir := filepath.Join(homeDir, ".dostman")
 	os.MkdirAll(storageDir, 0755)
 
 	a.storageService = services.NewStorageService(storageDir)
